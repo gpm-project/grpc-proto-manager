@@ -1,4 +1,4 @@
 # Constants for the Makefile in charge of building the executable
 
 # Version of the project
-VERSION=v0.0.3
+VERSION=v0.0.4
