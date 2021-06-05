@@ -143,11 +143,13 @@ func (gpm *GPM) isExcluded(dirName string) bool {
 // the project will be returned.
 func (gpm *GPM) LoadProtoLangs(targetPath string) ([]string, error) {
 	protolangsFile := path.Join(targetPath, ProtoLangFileName)
+	log.Debug().Str("path", protolangsFile).Msg("Protofile")
 	if _, err := os.Stat(protolangsFile); os.IsNotExist(err) {
+		log.Debug().Msg("using default language")
 		return []string{gpm.cfg.DefaultLanguage}, nil
 	}
 	// read the file, no long lines are expected
-	readFile, err := os.Open(targetPath)
+	readFile, err := os.Open(protolangsFile)
 	if err != nil {
 		return nil, err
 	}

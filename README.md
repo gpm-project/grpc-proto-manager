@@ -15,7 +15,7 @@ The tool relies in a simple directory structure to create the protos.
 
 2. Target repos must exist on your account. This may be addressed for now, but for now, your administrator should create a repo named `grpc-<high_level_entity>-<target_language>` that will store the generated code.
 
-3. To specify the target languages use a file named `.protolang` inside each directory. Be aware that this has been tested for now for Golang, other languages may not work :).
+3. To specify the target languages use a file named `.protolangs` inside each directory. Be aware that this has been mostly tested for now on Golang, other languages may not work :).
 
 ## Can I see a working example?
 
@@ -69,15 +69,15 @@ By using this approach, the protorepo is mounted on the `/defs` directory of the
 
 ### Integration with GitHub Actions
 
-In the works :) Stay tunned.
+The GPM can be easily integrated with GitHub Actions. Check the [gpm-github-action](https://github.com/gpm-project/gpm-github-action) repo for more information.
 
 ## Roadmap/TODO
 
 - Add tests
 - Improve parametrization
 - Brew installation
-- Extract the project to a single GitHub organization :)
 - Improve overall documentation abouth protos and GPM
+- Detect cross directory dependencies.
 
 ## Inspiration
 

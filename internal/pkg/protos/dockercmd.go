@@ -34,9 +34,15 @@ func (dcp *DockerCmdProvider) Generate(rootPath string, targetName string, gener
 		"-d", targetName, // Directory to take protos from
 		"-i", ".", // Include local path
 		"-o", "generated", // Path where the resulting code is stored.
-		// Extra options from the available arguments
-		"--with-gateway",   //Generate grpc-gateway files (experimental)
-		"--with-validator", // Generate validations for (go gogo cpp java python)
+	}
+
+	// Extra options from the available arguments
+	if language == "go" {
+		cmdArgs = append(cmdArgs, "--with-gateway") //Generate grpc-gateway files (experimental)
+	}
+
+	if language == "go" || language == "gogo" || language == "cpp" || language == "java" || language == "python" {
+		cmdArgs = append(cmdArgs, "--with-validator") // Generate validations for (go gogo cpp java python)
 	}
 
 	cmd := exec.Command("docker", cmdArgs...)
