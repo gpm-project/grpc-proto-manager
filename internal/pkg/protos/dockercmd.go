@@ -29,7 +29,7 @@ func (dcp *DockerCmdProvider) Generate(rootPath string, targetName string, gener
 	cmdArgs := []string{
 		"run",
 		"-v", fmt.Sprintf("%s:/defs", rootPath), // source proto definition. This should be the root so imports work :)
-		"namely/protoc-all:1.32_4", // Image, maybe move this as a constant or config value.
+		"namely/protoc-all:1.37_2", // Image, maybe move this as a constant or config value.
 		"-l", language,             // Target language
 		"-d", targetName, // Directory to take protos from
 		"-i", ".", // Include local path
