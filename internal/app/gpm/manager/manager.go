@@ -1,3 +1,19 @@
+/**
+ * Copyright 2023 GPM Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package manager
 
 import (
@@ -18,7 +34,7 @@ import (
 const ProtoLangFileName = ".protolangs"
 
 // ExcludedDirs with the list of directories that will be excluded by default.
-var ExcludedDirs = []string{".git", ".github"}
+var ExcludedDirs = []string{".git", ".github", ".idea"}
 
 // GPM structure with the manager main loop.
 type GPM struct {
@@ -34,7 +50,7 @@ func NewManager(cfg config.ServiceConfig) *GPM {
 
 // SetupGeneratorConfig determines if the required parameters are present depending on the selected environment.
 func (gpm *GPM) SetupGeneratorConfig() error {
-	generator, exists := protos.GeneratorTypeToEnum[gpm.cfg.GeneratorName]
+	generator, exists := config.GeneratorTypeToEnum[gpm.cfg.GeneratorName]
 	if !exists {
 		return fmt.Errorf("unsupported generator %s", gpm.cfg.GeneratorName)
 	}
@@ -45,7 +61,7 @@ func (gpm *GPM) SetupGeneratorConfig() error {
 	}
 
 	switch generator {
-	case protos.DockerizedCmd:
+	case config.DockerizedCmd:
 		return gpm.SetupDockerizedGeneration(repoProvider)
 	}
 	return nil
@@ -70,7 +86,9 @@ func (gpm *GPM) Run(basePath string) error {
 		log.Fatal().Err(err).Msg("invalid configuration options")
 	}
 	gpm.cfg.Print()
-	defer gpm.cleanup(basePath, gpm.cfg.TempPath)
+	if !gpm.cfg.SkipTempRemoval {
+		defer gpm.cleanup(basePath, gpm.cfg.TempPath)
+	}
 
 	repoProvider, err := repo.NewRepoProvider(gpm.cfg.RepositoryProvider)
 	if err != nil {
@@ -78,7 +96,7 @@ func (gpm *GPM) Run(basePath string) error {
 	}
 	gpm.repositoryProvider = repoProvider
 
-	protoGenerator, err := protos.NewGenerator(gpm.cfg.GeneratorName)
+	protoGenerator, err := protos.NewGenerator(&gpm.cfg.GeneratorConfig)
 	if err != nil {
 		return err
 	}
@@ -196,7 +214,7 @@ func (gpm *GPM) ProcessProtoDirectory(targetPath string, name string) error {
 		if err != nil {
 			return fmt.Errorf("cannot compare files: %w", err)
 		}
-		if !equal {
+		if !equal || gpm.cfg.ForceRegeneration {
 			// If there is a change, generate the proto stubs on the given languages
 			err := gpm.OrchestrateGeneration(name, tmpRepoDir, language)
 			if err != nil {
@@ -206,7 +224,9 @@ func (gpm *GPM) ProcessProtoDirectory(targetPath string, name string) error {
 			log.Info().Str("repo", repoName).Msg("no changes detected, skipping generation")
 		}
 		// Remove the temporal directory
-		_ = os.RemoveAll(tmpRepoDir)
+		if !gpm.cfg.SkipTempRemoval {
+			_ = os.RemoveAll(tmpRepoDir)
+		}
 	}
 
 	return nil

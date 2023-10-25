@@ -1,3 +1,19 @@
+/**
+ * Copyright 2023 GPM Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package commands
 
 import (
@@ -35,13 +51,16 @@ var generateCmd = &cobra.Command{
 func init() {
 	generateCmd.Flags().String("tempPath", "/tmp/gpm",
 		"Temporal file for the generation of intermediate data")
-	generateCmd.Flags().StringVar(&appConfig.GeneratorName, "protoGenerator", "docker", "Implementation used to generate the proto code.")
+	generateCmd.Flags().StringVar(&appConfig.GeneratorName, "protoGenerator", "docker", "Implementation used to generate the proto code: docker, or dockerized.")
 	generateCmd.Flags().StringVar(&appConfig.RepositoryAccessToken, "repositoryAccessToken", "", "An access token for the authentication of the repository provider. Use this for GitHub actions.")
 	generateCmd.Flags().BoolVar(&appConfig.SkipPublish, "skipPublish", false, "Flag to skip publishing the generated protos")
 	err := viper.BindPFlag("tempPath", generateCmd.Flags().Lookup("tempPath"))
 	if err != nil {
 		log.Error().Err(err).Msg("unable to bind viper key")
 	}
+	generateCmd.Flags().StringVar(&appConfig.DockerCmdImage, "dockerCmdImage", "namely/protoc-all:1.51_2", "The image to be used to generate the protos on docker mode.")
+	generateCmd.Flags().BoolVar(&appConfig.SkipTempRemoval, "skipTempRemoval", false, "Skip removing the temporal directories used to generated the new protos. Do not use in production as it is intented for local development.")
+	generateCmd.Flags().BoolVar(&appConfig.ForceRegeneration, "forceRegeneration", false, "Force the regeneration of all target protos")
 
 	rootCmd.AddCommand(generateCmd)
 }

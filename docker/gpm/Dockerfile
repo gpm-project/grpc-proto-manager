@@ -1,4 +1,4 @@
-FROM namely/protoc-all:1.37_2
+FROM namely/protoc-all:1.51_2
 
 ## Add git to be able to download repositories.
 RUN set -ex && apt-get update && apt-get install -y --no-install-recommends \

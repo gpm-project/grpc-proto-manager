@@ -1,7 +1,24 @@
+/**
+ * Copyright 2023 GPM Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package protos
 
 import (
 	"fmt"
+	"github.com/gpm-project/grpc-proto-manager/internal/app/gpm/config"
 	"os/exec"
 	"path"
 
@@ -12,12 +29,16 @@ import (
 // implementations will rely on the docker library.
 type DockerCmdProvider struct {
 	Common
+	cfg *config.GeneratorConfig
 }
 
 // NewDockerCmdGenerator uses an external command to launch the docker container with the proto tools.
-func NewDockerCmdGenerator() (Generator, error) {
+func NewDockerCmdGenerator(generatorConfig *config.GeneratorConfig) (Generator, error) {
 	log.Debug().Msg("Using DockerCmd proto generator")
-	return &DockerCmdProvider{Common: Common{}}, nil
+	return &DockerCmdProvider{
+		Common: Common{},
+		cfg:    generatorConfig,
+	}, nil
 }
 
 // Generate a set of proto stubs in a given language.
@@ -29,8 +50,8 @@ func (dcp *DockerCmdProvider) Generate(rootPath string, targetName string, gener
 	cmdArgs := []string{
 		"run",
 		"-v", fmt.Sprintf("%s:/defs", rootPath), // source proto definition. This should be the root so imports work :)
-		"namely/protoc-all:1.37_2", // Image, maybe move this as a constant or config value.
-		"-l", language,             // Target language
+		dcp.cfg.DockerCmdImage, // Image, maybe move this as a constant or config value.
+		"-l", language,         // Target language
 		"-d", targetName, // Directory to take protos from
 		"-i", ".", // Include local path
 		"-o", "generated", // Path where the resulting code is stored.
@@ -46,7 +67,7 @@ func (dcp *DockerCmdProvider) Generate(rootPath string, targetName string, gener
 	}
 
 	cmd := exec.Command("docker", cmdArgs...)
-	log.Debug().Interface("cmd", cmd).Msg("docker generation cmd")
+	log.Debug().Interface("cmd", cmd.Args).Msg("docker generation cmd")
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("unable to generate protos for %s due to %w: %s", targetName, err, string(stdoutStderr))

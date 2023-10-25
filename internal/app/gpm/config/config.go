@@ -1,3 +1,19 @@
+/**
+ * Copyright 2023 GPM Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package config
 
 import (
@@ -35,8 +51,12 @@ type ServiceConfig struct {
 	TempPath string
 	// SkipPublish determines if the generated protos are to be published.
 	SkipPublish bool
-	// GeneratorName with the name of the provider implementing the operations of proto code generation.
-	GeneratorName string
+	// SkipTempRemoval avoid removing the contents of the temporal directory. This is useful for the project development.
+	SkipTempRemoval bool
+	// ForceRegeneration forces the regeneration of all protos.
+	ForceRegeneration bool
+	// GeneratorConfig with the configuration elements for the proto generator.
+	GeneratorConfig
 }
 
 // resolvePath processes the path given as input and translates it based on relative abstractions.
@@ -82,6 +102,9 @@ func (sc *ServiceConfig) IsValid() error {
 	if err := sc.createDirectoryIfNotExists(sc.TempPath); err != nil {
 		return err
 	}
+	if err := sc.GeneratorConfig.IsValid(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -90,10 +113,13 @@ func (sc *ServiceConfig) Print() {
 	// Use logger to print the configuration
 	log.Info().Str("version", sc.Version).Str("commit", sc.Commit).Msg("app config")
 	log.Info().Str("Project", sc.ProjectPath).Str("Temp", sc.TempPath).Msg("Paths")
-	log.Info().Str("Repository", sc.RepositoryProvider).Str("generator", sc.GeneratorName).Msg("Providers")
+	log.Info().Str("Repository", sc.RepositoryProvider).Msg("Providers")
 	log.Info().Str("Language", sc.DefaultLanguage).Msg("Defaults")
 	if sc.SkipPublish {
 		log.Warn().Msg("Proto publication is disabled")
+	}
+	if sc.SkipTempRemoval {
+		log.Warn().Msg("Temporal files will not be deleted. Manual deletion is expected.")
 	}
 	log.Info().Str("URL", sc.RepositoryOrganization).Msg("generated code repository")
 	// Pusher related information.
@@ -111,6 +137,6 @@ func (sc *ServiceConfig) Print() {
 	if sc.RepositoryAccessToken != "" {
 		pusherInfo = pusherInfo.Str("accessToken", strings.Repeat("*", len(sc.RepositoryAccessToken)))
 	}
-
 	pusherInfo.Msg("pusher information")
+	sc.GeneratorConfig.Print()
 }

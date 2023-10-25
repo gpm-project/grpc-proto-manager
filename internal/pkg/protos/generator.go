@@ -1,28 +1,25 @@
+/**
+ * Copyright 2023 GPM Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package protos
 
-import "fmt"
-
-// GeneratorType defining the enum with proto generators.
-type GeneratorType int
-
-const (
-	// DockerCmd proto generator.
-	DockerCmd GeneratorType = iota
-	// DockerizedCmd to use the embeeded proto generator.
-	DockerizedCmd
+import (
+	"fmt"
+	"github.com/gpm-project/grpc-proto-manager/internal/app/gpm/config"
 )
-
-// GeneratorTypeToString map associating type an string representation.
-var GeneratorTypeToString = map[GeneratorType]string{
-	DockerCmd:     "docker",
-	DockerizedCmd: "dockerized",
-}
-
-// GeneratorTypeToEnum map associating string representation with enum type.
-var GeneratorTypeToEnum = map[string]GeneratorType{
-	"docker":     DockerCmd,
-	"dockerized": DockerizedCmd,
-}
 
 // Generator interface for all implementations.
 type Generator interface {
@@ -31,16 +28,16 @@ type Generator interface {
 }
 
 // NewGenerator builds a new generator.
-func NewGenerator(generatorName string) (Generator, error) {
-	gen, exists := GeneratorTypeToEnum[generatorName]
+func NewGenerator(generatorConfig *config.GeneratorConfig) (Generator, error) {
+	gen, exists := config.GeneratorTypeToEnum[generatorConfig.GeneratorName]
 	if !exists {
-		return nil, fmt.Errorf("generator %s not found", generatorName)
+		return nil, fmt.Errorf("generator %s not found", generatorConfig.GeneratorName)
 	}
 	switch gen {
-	case DockerCmd:
-		return NewDockerCmdGenerator()
-	case DockerizedCmd:
+	case config.DockerCmd:
+		return NewDockerCmdGenerator(generatorConfig)
+	case config.DockerizedCmd:
 		return NewDockerizedCmdGenerator()
 	}
-	return nil, fmt.Errorf("no implementation found for %s generator", generatorName)
+	return nil, fmt.Errorf("no implementation found for %s generator", generatorConfig.GeneratorName)
 }
